@@ -124,7 +124,7 @@ export default {
                         Once a level falls onto the Legacy List, we still accept records for the level.
                     </p>
                     <p>
-                        We only look at the AREDL/Pointercrate, Denouement Demonlist and Impossible Levels List. Any other demonlists will either be mentioned soon or not.
+                        We only look at the AREDL/Pointercrate, Unrated Demonlist and Impossible Levels List. Any other demonlists will either be mentioned soon or not.
                 </div>
             </div>
         </main>
