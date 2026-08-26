@@ -5,12 +5,17 @@ const scale = 3;
 
 /**
  * Calculate the score awarded when having a certain percentage on a list level
+ * @param {String} name Name of the level
  * @param {Number} rank Position on the list
  * @param {Number} percent Percentage of completion
  * @param {Number} minPercent Minimum percentage required
  * @returns {Number}
  */
-export function score(rank, percent, minPercent) {
+export function score(name, rank, percent, minPercent) {
+    if (name && name.toUpperCase().includes('ILL')) {
+        return 0;
+    }
+
     if (rank > 150) {
         return 2.5;
     }
@@ -35,6 +40,23 @@ export function score(rank, percent, minPercent) {
 
     return Math.max(round(score), 0);
 }
+
+export function round(num) {
+    if (!('' + num).includes('e')) {
+        return +(Math.round(num + 'e+' + scale) + 'e-' + scale);
+    } else {
+        var arr = ('' + num).split('e');
+        var sig = '';
+        if (+arr[1] + scale > 0) {
+            sig = '+';
+        }
+        return +(
+            Math.round(+arr[0] + 'e' + sig + (+arr[1] + scale)) +
+            'e-' +
+            scale
+        );
+    }
+}}
 
 export function round(num) {
     if (!('' + num).includes('e')) {
