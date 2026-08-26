@@ -130,7 +130,7 @@ export default {
                         Unverified levels are included as well from the demonlists we chose.
                     </p>    
                     <p>
-                        Here are the following levels i unfortunately cannot add: C*M (https://impossiblelevels.com/level/11)
+                        Here are the following levels i unfortunately cannot add (copy these links): C*M (https://impossiblelevels.com/level/11)
                 </div>
             </div>
         </main>
