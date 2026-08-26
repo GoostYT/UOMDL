@@ -1,93 +1,124 @@
-/**
- * Numbers of decimal digits to round to
- */
-const scale = 3;
+import { round, score } from './score.js';
 
 /**
- * Calculate the score awarded when having a certain percentage on a list level
- * @param {Number} rank Position on the list
- * @param {Number} percent Percentage of completion
- * @param {Number} minPercent Minimum percentage required
- * @returns {Number}
+ * Path to directory containing `_list.json` and all levels
  */
-export function score(rank, percent, minPercent) {
-    if (rank > 150) {
-        return 2.5;
+const dir = '/data';
+
+export async function fetchList() {
+    const listResult = await fetch(`${dir}/_list.json`);
+    try {
+        const list = await listResult.json();
+        return await Promise.all(
+            list.map(async (path, rank) => {
+                const levelResult = await fetch(`${dir}/${path}.json`);
+                try {
+                    const level = await levelResult.json();
+                    return [
+                        {
+                            ...level,
+                            path,
+                            records: level.records.sort(
+                                (a, b) => b.percent - a.percent,
+                            ),
+                        },
+                        null,
+                    ];
+                } catch {
+                    console.error(`Failed to load level #${rank + 1} ${path}.`);
+                    return [null, path];
+                }
+            }),
+        );
+    } catch {
+        console.error(`Failed to load list.`);
+        return null;
     }
-    if (rank > 75 && percent < 100) {
-        return 5;
-    }
-
-    // Old formula
-    /*
-    let score = (100 / Math.sqrt((rank - 1) / 50 + 0.444444) - 50) *
-        ((percent - (minPercent - 1)) / (100 - (minPercent - 1)));
-    */
-    // New formula
-    let score = 5 * (151 - rank) *
-        ((percent - (minPercent - 1)) / (100 - (minPercent - 1)));
-
-    score = Math.max(0, score);
-
-    if (percent != 100) {
-        return round(score - score / 3);
-    }
-
-    return Math.max(round(score), 0);
 }
 
-export function round(num) {
-    if (!('' + num).includes('e')) {
-        return +(Math.round(num + 'e+' + scale) + 'e-' + scale);
-    } else {
-        var arr = ('' + num).split('e');
-        var sig = '';
-        if (+arr[1] + scale > 0) {
-            sig = '+';
-        }
-        return +(
-            Math.round(+arr[0] + 'e' + sig + (+arr[1] + scale)) +
-            'e-' +
-            scale
-        );
+export async function fetchEditors() {
+    try {
+        const editorsResults = await fetch(`${dir}/_editors.json`);
+        const editors = await editorsResults.json();
+        return editors;
+    } catch {
+        return null;
     }
-}    if (percent != 100) {
-        return round(score - score / 3);
-    }
-
-    return Math.max(round(score), 0);
 }
 
-export function round(num) {
-    if (!('' + num).includes('e')) {
-        return +(Math.round(num + 'e+' + scale) + 'e-' + scale);
-    } else {
-        var arr = ('' + num).split('e');
-        var sig = '';
-        if (+arr[1] + scale > 0) {
-            sig = '+';
-        }
-        return +(
-            Math.round(+arr[0] + 'e' + sig + (+arr[1] + scale)) +
-            'e-' +
-            scale
-        );
-    }
-}}
+export async function fetchLeaderboard() {
+    const list = await fetchList();
 
-export function round(num) {
-    if (!('' + num).includes('e')) {
-        return +(Math.round(num + 'e+' + scale) + 'e-' + scale);
-    } else {
-        var arr = ('' + num).split('e');
-        var sig = '';
-        if (+arr[1] + scale > 0) {
-            sig = '+';
+    const scoreMap = {};
+    const errs = [];
+    list.forEach(([level, err], rank) => {
+        if (err) {
+            errs.push(err);
+            return;
         }
-        return +(
-            Math.round(+arr[0] + 'e' + sig + (+arr[1] + scale)) +
-            'e-' +
-            scale
-        );
-    }
+
+        // Verification
+        const verifier = Object.keys(scoreMap).find(
+            (u) => u.toLowerCase() === level.verifier.toLowerCase(),
+        ) || level.verifier;
+        scoreMap[verifier] ??= {
+            verified: [],
+            completed: [],
+            progressed: [],
+        };
+        const { verified } = scoreMap[verifier];
+        verified.push({
+            rank: rank + 1,
+            level: level.name,
+            score: score(rank + 1, 100, level.percentToQualify),
+            link: level.verification,
+        });
+
+        // Records
+        level.records.forEach((record) => {
+            const user = Object.keys(scoreMap).find(
+                (u) => u.toLowerCase() === record.user.toLowerCase(),
+            ) || record.user;
+            scoreMap[user] ??= {
+                verified: [],
+                completed: [],
+                progressed: [],
+            };
+            const { completed, progressed } = scoreMap[user];
+            if (record.percent === 100) {
+                completed.push({
+                    rank: rank + 1,
+                    level: level.name,
+                    score: score(rank + 1, 100, level.percentToQualify),
+                    link: record.link,
+                });
+                return;
+            }
+
+            progressed.push({
+                rank: rank + 1,
+                level: level.name,
+                percent: record.percent,
+                score: score(rank + 1, record.percent, level.percentToQualify),
+                link: record.link,
+            });
+        });
+    });
+
+    // Wrap in extra Object containing the user and total score
+    const res = Object.entries(scoreMap).map(([user, scores]) => {
+        const { verified, completed, progressed } = scores;
+        const total = [verified, completed, progressed]
+            .flat()
+            .reduce((prev, cur) => prev + cur.score, 0);
+
+        return {
+            user,
+            total: round(total),
+            ...scores,
+        };
+    });
+
+    // Sort by total score
+    return [res.sort((a, b) => b.total - a.total), errs];
 }
