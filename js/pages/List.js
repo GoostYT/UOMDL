@@ -125,6 +125,10 @@ export default {
                     </p>
                     <p>
                         We only look at the AREDL/Pointercrate, Unrated Demonlist and Impossible Levels List. Any other demonlists will either be mentioned soon or not.
+                    </p>
+                    <p>
+                        Unverified levels are included as well from the demonlists we chose.
+                    </p>    
                 </div>
             </div>
         </main>
