@@ -1,4 +1,5 @@
 import { round, score } from './score.js';
+
 /**
  * Path to directory containing `_list.json` and all levels
  */
@@ -118,9 +119,6 @@ export async function fetchLeaderboard() {
         };
     });
 
-    // Sort by total score
-    return [res.sort((a, b) => b.total - a.total), errs];
-}
     // Sort by total score
     return [res.sort((a, b) => b.total - a.total), errs];
 }
