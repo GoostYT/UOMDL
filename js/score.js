@@ -33,6 +33,9 @@ export function score(rank, percent, minPercent) {
     }
 
     return Math.max(round(score), 0);
+
+    if (name.includes(Unverified)
+        score = Math.max(0, score)
 }
 
 export function round(num) {
